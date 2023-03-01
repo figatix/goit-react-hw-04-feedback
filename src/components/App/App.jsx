@@ -1,5 +1,5 @@
 
-import React, { Component } from "react";
+import React, { useState } from "react";
 import { Feedback } from "../Feadback/Feedback";
 import { Section } from "../Section/Section";
 import { Statistics } from "../Statistics/Statistics";
@@ -7,70 +7,82 @@ import Notification from "components/Notification/Notification";
 
 import { StyledWrapper } from "components/App/Wrapper.styled";
 
-
-
-class App extends Component {
-
-  state = {
+const App = () => {
+  const [votes, setVotes] = useState({
     good: 0,
     neutral: 0,
-    bad: 0
-  }
+    bad: 0,
+  });
 
-  handleFeedbackVote = (e) => {
-    const currentBtnId = e.target.id
-    this.setState((prevState) => (
-      { [currentBtnId]: prevState[currentBtnId] + 1 }
-    ))
-  }
+  const handleFeedbackVote = (e) => {
+    const voteType = e.target.id;
+    setVotes((prevState) => ({
+      ...prevState,
+      [voteType]: prevState[voteType] + 1,
+    }));
+  };
+  /*
+    ? Я використав в стейті об'єкт, щоб не робити Світч кейси
 
-  countTotalFeedback = () => {
-    return Object.values(this.state).reduce((acc, el) => (acc + el), 0)
-  }
+    const handleFeedbackVote = (e) => {
+      const currentBtnId = e.target.id
+      switch (currentBtnId) {
+        case 'good':
+          setGood((prevState) => prevState + 1);
+          break;
+        case 'neutral':
+          setNeutral((prevState) => prevState + 1);
+          break;
+        case 'bad':
+          setBad((prevState) => prevState + 1);
+          break;
+        default:
+          return;
+      }
+    }
+  */
 
-  countPositiveFeedbackPercentage = () => {
-    const percentage = this.state.good / this.countTotalFeedback();
+  const { good, neutral, bad } = votes;
 
-    return (percentage ? Math.ceil(percentage * 100) : 0);
-  }
+  const countTotalFeedback = () => {
+    return good + neutral + bad;
+  };
 
-  render() {
-    this.countPositiveFeedbackPercentage()
-    const { good, neutral, bad } = this.state
-    const total = this.countTotalFeedback();
-    const positiveFeedbackPercentage = this.countPositiveFeedbackPercentage();
+  const countPositiveFeedbackPercentage = () => {
+    const percentage = good / countTotalFeedback();
+    return countTotalFeedback() > 0 && percentage
+      ? Math.ceil(percentage * 100)
+      : 0;
+  };
 
-    return (
+  const total = countTotalFeedback();
+  const positiveFeedbackPercentage = countPositiveFeedbackPercentage();
 
-      <StyledWrapper>
+  return (
+    <StyledWrapper>
+      <Section title="Dude, leave your feedback:) Please!">
+        <Feedback
+          onLeaveFeedback={handleFeedbackVote}
+          options={["good", "neutral", "bad"]}
+        />
+      </Section>
 
-        <Section title="Dude, leave your feedback:) Please!">
-          <Feedback
-            onLeaveFeedback={this.handleFeedbackVote}
-            options={['good', 'neutral', 'bad']}
+      <Section title="Statistics of feedbacks">
+        {total !== 0 ? (
+          <Statistics
+            goodCount={good}
+            neutralCount={neutral}
+            badCount={bad}
+            total={total}
+            positivePercentage={positiveFeedbackPercentage}
           />
-        </Section>
-
-        <Section title="Statistics of feedbacks">
-
-          {total !== 0 ?
-            <Statistics
-              goodCount={good}
-              neutralCount={neutral}
-              badCount={bad}
-              total={total}
-              positivePercentage={positiveFeedbackPercentage}
-            />
-            :
-            <Notification message="We are sorry... There is no feedback">
-            </Notification>
-          }
-        </Section>
-
-      </StyledWrapper>
-    );
-  }
-}
-
+        ) : (
+          <Notification message="We are sorry... There is no feedback" />
+        )}
+      </Section>
+    </StyledWrapper>
+  );
+};
 
 export { App };
+
